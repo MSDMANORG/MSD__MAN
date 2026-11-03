@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>قارچ‌خور | MSD</title>
+<style>
+:root{--gold:#ffd34e;--ink:#10213b}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101d36;font-family:Tahoma,Arial,sans-serif;color:white;touch-action:none}
+#game{display:block;width:100vw;height:100dvh;background:#75d7ff}
+.hud{position:fixed;z-index:3;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;gap:8px}.pill{background:#10213bdc;border:2px solid #ffffff45;border-radius:14px;padding:8px 13px;font-weight:bold;text-shadow:0 2px #0005;box-shadow:0 4px 0 #09142655}.hud button{pointer-events:auto;border:0;color:white;background:#10213b;border-radius:12px;padding:9px 13px;font-weight:bold}
+#overlay{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:linear-gradient(145deg,#10213bdc,#10213b99);padding:20px}
+.panel{width:min(480px,94vw);padding:28px 22px;border:2px solid #ffffff55;border-radius:26px;background:linear-gradient(160deg,#244d79f5,#122743f5);box-shadow:0 18px 60px #0008;text-align:center}
+h1{font-size:clamp(32px,8vw,52px);margin:0 0 8px;color:#ffe16a;text-shadow:0 4px #9a4d22,0 7px 16px #0007}.sub{color:#d6edff;line-height:1.9;margin:8px 0 20px}
+.action{width:100%;padding:14px;margin:6px 0;border:0;border-radius:14px;background:linear-gradient(#ffe77b,#ffb52f);color:#3b2600;font-size:18px;font-weight:900;box-shadow:0 5px #a75b13;cursor:pointer}.action.alt{background:linear-gradient(#9de8ff,#48a9ed);box-shadow:0 5px #1b6196;color:#09243b}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;text-align:right}.settings label{font-size:13px;color:#d6edff}.settings select,.settings input{width:100%;margin-top:6px;padding:10px;border:1px solid #ffffff55;border-radius:10px;background:#10213b;color:white}.settings input[type=file]{font-size:11px;padding:7px}.skin-note{font-size:11px;color:#c6e3f7;grid-column:1/-1}
+#touch{position:fixed;z-index:4;bottom:max(18px,env(safe-area-inset-bottom));left:0;right:0;display:flex;direction:ltr;justify-content:space-between;align-items:flex-end;padding:0 22px;pointer-events:none}
+.pad{display:flex;direction:ltr;gap:12px;align-items:flex-end}.ctl{pointer-events:auto;width:78px;height:78px;border:2px solid #ffffff8a;border-radius:20px;background:#10213bc9;color:white;font-size:27px;font-weight:bold;box-shadow:0 5px #07132688;user-select:none;-webkit-user-select:none;touch-action:none}.ctl.jump{width:94px;height:94px;border-radius:28px;background:#e78b24e8;font-size:17px}.ctl:active{transform:translateY(4px);box-shadow:0 1px #07132688}
+#toast{position:fixed;z-index:4;top:82px;left:50%;transform:translateX(-50%);background:#10213be8;padding:9px 18px;border-radius:20px;font-weight:bold;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+@media(min-width:900px){.ctl{width:82px;height:82px}.ctl.jump{width:100px;height:100px}}
+</style></head>
+<body>
+<canvas id="game"></canvas>
+<div class="hud"><div class="pill">🍄 امتیاز: <span id="score">0</span>　❤️ <span id="lives">3</span></div><div class="pill">مرحله <span id="level">1</span>　⭐ <span id="coins">0</span></div><button id="sound">🔊 صدا</button><button id="music">🎵 موسیقی روشن</button><button id="pause">Ⅱ مکث</button></div>
+<div id="toast"></div>
+<div id="touch"><div class="pad"><button class="ctl" data-key="left">◀</button><button class="ctl" data-key="right">▶</button></div><div class="pad"><button class="ctl jump" data-key="jump">پرش ⬆</button></div></div>
+<div id="overlay"><div class="panel"><h1>قارچ‌خور</h1><div class="sub">ماجراجویی رنگارنگ در دنیای قارچ‌ها<br>روی دشمن‌ها بپر، سکه جمع کن و قارچ قدرت را بگیر!</div><div class="settings"><label>درجه سختی<select id="difficulty"><option value="easy">آسان</option><option value="normal" selected>متوسط</option><option value="hard">سخت</option><option value="pro">حرفه‌ای</option></select></label><label>عکس دلخواه اسکین<input id="skinUpload" type="file" accept="image/*"></label><button type="button" class="action alt" id="removeSkin" style="grid-column:1/-1;margin:0;padding:10px;font-size:14px">حذف عکس و بازگشت به اسکین اصلی</button><div class="skin-note" id="skinStatus">اسکین اصلی قارچ‌خور فعال است؛ بارگذاری عکس اختیاری است.</div></div><button class="action" id="start">شروع بازی</button><button class="action" id="nextStage" hidden>مرحله بعد ⟵</button><button class="action alt" id="how">راهنمای بازی</button><div id="help" class="sub" hidden>حرکت: کلیدهای جهت‌دار یا دکمه‌های پایین صفحه<br>پرش: Space یا دکمه «پرش»<br>با پریدن روی دشمن آن را شکست می‌دهی؛ قارچ قرمز تو را بزرگ و قوی می‌کند.</div><div style="font-size:12px;color:#b8d7f0;margin-top:12px">MSD GAME STUDIO</div></div></div>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score'),livesEl=document.getElementById('lives'),coinsEl=document.getElementById('coins'),levelEl=document.getElementById('level'),overlay=document.getElementById('overlay'),toastEl=document.getElementById('toast');
+let W=innerWidth,H=innerHeight,dpr=1,worldW=3400,camera=0,score=0,coins=0,lives=3,level=1,running=false,paused=false,gameOver=false,last=0,toastTimer;
+let audioCtx=null, soundOn=true, musicOn=true, musicTimer=null, musicStep=0, masterVolume=.9;
+let difficulty='normal', customSkin=null;
+function musicNote(freq,duration=.19){
+ if(!musicOn||!soundOn||!audioCtx)return;
+ try{
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='square';o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+  g.gain.setValueAtTime(.0001,audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(.12*masterVolume,audioCtx.currentTime+.012);
+  g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration+.02);
+ }catch(e){}
+}
+const melody=[659,784,988,784,659,523,587,659,784,988,1175,988,784,659,587,523,
+ 659,784,988,1175,988,784,659,587,523,587,659,784,659,587,523,494];
+function startMusic(){
+ if(!soundOn||!musicOn||musicTimer)return;
+ try{audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}catch(e){return}
+ musicStep=0;
+ musicTimer=setInterval(()=>{if(!running||paused||!musicOn||!soundOn)return;musicNote(melody[musicStep%melody.length],.22);if(musicStep%4===0)musicNote(melody[(musicStep+8)%melody.length]/2,.30);musicStep++;},250);
+}
+function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null;}}
+
+function tone(freq,duration,type='square',volume=.11,slide=0){if(!soundOn)return;try{audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,freq+slide),audioCtx.currentTime+duration);g.gain.setValueAtTime(volume,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration)}catch(e){}}
+function sfx(name){if(name==='block'){tone(520,.07,'square',.09,-120);setTimeout(()=>tone(330,.07,'square',.07,-80),55)}else if(name==='coin'){tone(988,.08,'square',.12,220);setTimeout(()=>tone(1318,.12,'square',.10,180),65)}else if(name==='jump'){tone(360,.12,'square',.09,380)}else if(name==='power'){tone(440,.12,'square',.05,180);setTimeout(()=>tone(660,.13,'square',.05,220),110);setTimeout(()=>tone(880,.2,'square',.05,300),220)}else if(name==='stomp'){tone(180,.12,'triangle',.07,-80)}else if(name==='hurt'){tone(260,.28,'sawtooth',.045,-180)}else if(name==='win'){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.18,'square',.05),i*130))}}
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+const keys={left:false,right:false,jump:false};let jumpQueued=false;
+const difficultySettings={easy:{speed:270,enemy:.72,gravity:1320,jump:600},normal:{speed:245,enemy:1,gravity:1450,jump:570},hard:{speed:230,enemy:1.28,gravity:1550,jump:555},pro:{speed:220,enemy:1.55,gravity:1650,jump:540}};
+document.getElementById('difficulty').addEventListener('change',e=>{difficulty=e.target.value;toast('سختی بازی: '+e.target.options[e.target.selectedIndex].text)});
+const skinInput=document.getElementById('skinUpload'),skinStatus=document.getElementById('skinStatus');
+try{const saved=localStorage.getItem('msdMushroomSkin');if(saved){customSkin=new Image();customSkin.onload=()=>{skinStatus.textContent='عکس اسکین ذخیره‌شده فعال است.'};customSkin.src=saved}}catch(e){}
+document.getElementById('removeSkin').addEventListener('click',()=>{customSkin=null;skinInput.value='';try{localStorage.removeItem('msdMushroomSkin')}catch(e){}skinStatus.textContent='عکس حذف شد؛ اسکین اصلی قارچ‌خور فعال است.';toast('اسکین اصلی فعال شد');});
+skinInput.addEventListener('change',()=>{const file=skinInput.files&&skinInput.files[0];if(!file)return;if(!file.type.startsWith('image/')){skinStatus.textContent='لطفاً یک فایل تصویری انتخاب کن.';return}if(file.size>5*1024*1024){skinStatus.textContent='حجم عکس باید کمتر از ۵ مگابایت باشد.';skinInput.value='';return}const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{customSkin=img;skinStatus.textContent='عکس انتخابی روی شخصیت اعمال شد.';try{localStorage.setItem('msdMushroomSkin',reader.result)}catch(e){skinStatus.textContent='عکس فعال شد؛ ذخیره دائمی در این مرورگر ممکن نشد.'}};img.src=reader.result};reader.readAsDataURL(file)});
+function keySet(k,v){if(k==='jump'&&v&&!keys.jump)jumpQueued=true;keys[k]=v}
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp',' ','a','d','w'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft'||e.key==='a')keySet('left',true);if(e.key==='ArrowRight'||e.key==='d')keySet('right',true);if(e.key==='ArrowUp'||e.key==='w'||e.key===' ')keySet('jump',true);if(e.key==='Escape')togglePause()});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keySet('left',false);if(e.key==='ArrowRight'||e.key==='d')keySet('right',false);if(e.key==='ArrowUp'||e.key==='w'||e.key===' ')keySet('jump',false)});
+document.querySelectorAll('.ctl').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();keySet(k,true)};const off=e=>{e.preventDefault();keySet(k,false)};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
+const ground=()=>H-86;
+let player,enemies,items,platforms,particles,flag,questionBlocks=[];
+function reset(stage=1,keepProgress=false){
+ if(!keepProgress){score=0;coins=0;lives=3}
+ level=stage;camera=0;worldW=3400+(stage-1)*420;
+ player={x:90,y:0,w:34,h:48,vx:0,vy:0,on:false,big:false,power:0,inv:0,face:1};
+ player.y=ground()-player.h;
+ const shift=(stage-1)*90;
+ enemies=[enemy(530+shift),enemy(940+shift),enemy(1480+shift),enemy(2050+shift),enemy(2700+shift),...(stage>=2?[enemy(3050+shift),enemy(3450+shift)]:[])];
+ items=[
+  {x:360,y:ground()-105,type:'coin',got:false},{x:390,y:ground()-105,type:'coin',got:false},
+  {x:720+shift,y:ground()-125,type:'mushroom',got:false},{x:1160+shift,y:ground()-110,type:'coin',got:false},
+  {x:1660+shift,y:ground()-120,type:'coin',got:false},{x:2180+shift,y:ground()-130,type:'mushroom',got:false},
+  {x:2460+shift,y:ground()-105,type:'coin',got:false},{x:2920+shift,y:ground()-115,type:'coin',got:false}
+ ];
+ platforms=[
+  {x:300,y:ground()-70,w:150,h:18},{x:680+shift,y:ground()-90,w:150,h:18},
+  {x:1080+shift,y:ground()-70,w:180,h:18},{x:1580+shift,y:ground()-85,w:160,h:18},
+  {x:2100+shift,y:ground()-70,w:180,h:18},{x:2580+shift,y:ground()-100,w:170,h:18},
+  ...(stage>=2?[{x:3000+shift,y:ground()-85,w:170,h:18},{x:3420+shift,y:ground()-110,w:190,h:18}]:[])
+ ];
+ questionBlocks=[{x:470+shift,y:ground()-190,w:42,h:38,used:false,bump:0,reward:'coin'},{x:512+shift,y:ground()-190,w:42,h:38,used:false,bump:0,reward:'mushroom'},{x:1250+shift,y:ground()-205,w:42,h:38,used:false,bump:0,reward:'coin'},{x:1870+shift,y:ground()-190,w:42,h:38,used:false,bump:0,reward:'coin'},{x:2310+shift,y:ground()-215,w:42,h:38,used:false,bump:0,reward:'mushroom'}];
+ particles=[];flag={x:worldW-210};updateHUD();
+}
+function enemy(x){return{x,y:ground()-34,w:38,h:34,vx:1.05,alive:true,dir:1}}
+function updateHUD(){scoreEl.textContent=score;livesEl.textContent=lives;coinsEl.textContent=coins;levelEl.textContent=level}
+function toast(t){toastEl.textContent=t;toastEl.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.style.opacity=0,1400)}
+function togglePause(){if(!running||gameOver)return;paused=!paused;if(paused){stopMusic();overlay.style.display='grid';overlay.querySelector('h1').textContent='بازی متوقف شد';overlay.querySelector('.sub').textContent='برای ادامه ماجراجویی آماده‌ای؟';document.getElementById('start').textContent='ادامه بازی';document.getElementById('how').textContent='شروع دوباره'}else overlay.style.display='none'}
+document.getElementById('pause').onclick=togglePause;
+document.getElementById('music').onclick=()=>{musicOn=!musicOn;document.getElementById('music').textContent=musicOn?'🎵 موسیقی روشن':'🎵 موسیقی خاموش';if(musicOn&&running&&!paused)startMusic();else stopMusic();};
+
+document.getElementById('sound').onclick=()=>{soundOn=!soundOn;document.getElementById('sound').textContent=soundOn?'🔊 صدا':'🔇 بی‌صدا';if(soundOn)sfx('coin')};
+document.getElementById('how').onclick=()=>{const h=document.getElementById('help');h.hidden=!h.hidden};
+document.getElementById('start').onclick=()=>{try{audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){} if(!running||gameOver){reset(1,false);gameOver=false;running=true;document.getElementById('nextStage').hidden=true}paused=false;overlay.style.display='none';startMusic();document.getElementById('start').textContent='شروع بازی';document.querySelector('#overlay h1').textContent='قارچ‌خور';last=performance.now();requestAnimationFrame(loop)};
+document.getElementById('nextStage').onclick=()=>{
+ const next=level+1;reset(next,true);gameOver=false;running=true;paused=false;
+ document.getElementById('nextStage').hidden=true;overlay.style.display='none';
+ toast('مرحله '+next+' شروع شد!');startMusic();last=performance.now();requestAnimationFrame(loop);
+};
+function loseLife(){if(player.inv>0)return;sfx('hurt');lives--;updateHUD();if(lives<=0){gameOver=true;running=false;stopMusic();showEnd('بازی تمام شد','امتیاز نهایی: '+score)}else{player.x=Math.max(60,player.x-180);player.y=ground()-player.h;player.vy=0;player.inv=2;toast('یک جان کم شد!')}}
+function showEnd(title,msg,won=false){
+ overlay.style.display='grid';overlay.querySelector('h1').textContent=title;
+ overlay.querySelector('.sub').textContent=msg;
+ document.getElementById('start').textContent='از اول بازی کن';
+ document.getElementById('nextStage').hidden=!won;
+}
+function burst(x,y,color,n=9){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:-Math.random()*5-1,life:1,color})}
+function update(dt){const p=player;const cfg=difficultySettings[difficulty];let move=(keys.right?1:0)-(keys.left?1:0);p.vx=move*cfg.speed;p.x+=p.vx*dt;if(move)p.face=move;p.x=Math.max(0,Math.min(worldW-p.w,p.x));const prevY=p.y;p.vy+=cfg.gravity*dt;p.y+=p.vy*dt;p.on=false;
+// برخورد از زیر به بلوک‌های سؤال‌دار و آجری
+if(p.vy<0){for(const b of questionBlocks){const bottom=b.y+b.h;if(p.x+p.w>b.x&&p.x<b.x+b.w&&prevY>=bottom-2&&p.y<=bottom){p.y=bottom;p.vy=0;b.bump=.16;if(!b.used){b.used=true;sfx('block');if(b.reward==='coin'){items.push({x:b.x+6,y:b.y-24,type:'coin',got:false,pop:true,popVy:-300,popLife:.42});}else{items.push({x:b.x+5,y:b.y-28,type:'mushroom',got:false,pop:true,popVy:-190,popVx:95,popLife:.3});}toast(b.reward==='coin'?'بلوک ضربه خورد! سکه گرفتی':'بلوک ضربه خورد! قارچ قدرت!');}break;}}}
+if(p.y+p.h>=ground()){p.y=ground()-p.h;p.vy=0;p.on=true}
+for(const q of platforms){if(p.vy>=0&&p.x+p.w>q.x&&p.x<q.x+q.w&&p.y+p.h>=q.y&&p.y+p.h-p.vy*dt<=q.y){p.y=q.y-p.h;p.vy=0;p.on=true}}
+if(jumpQueued&&p.on){p.vy=-cfg.jump;p.on=false;sfx('jump');burst(p.x+p.w/2,p.y+p.h,'#fff2a0',4)}jumpQueued=false;
+if(p.inv>0)p.inv-=dt;if(p.power>0)p.power-=dt;
+for(const e of enemies){if(!e.alive)continue;e.x+=e.vx*e.dir*dt*difficultySettings[difficulty].enemy;if(e.x<80||e.x>worldW-100)e.dir*=-1;
+if(p.x<e.x+e.w&&p.x+p.w>e.x&&p.y<e.y+e.h&&p.y+p.h>e.y){if(p.vy>100&&p.y+p.h-e.y<24){e.alive=false;p.vy=-390;sfx('stomp');score+=200;burst(e.x+e.w/2,e.y,'#ffb45c',12);toast('+۲۰۰ امتیاز! دشمن شکست خورد')}else if(p.big||p.power>0){e.alive=false;sfx('stomp');score+=150;burst(e.x,e.y,'#ffb45c');toast('دشمن را شکست دادی!')}else loseLife()}}
+for(const it of items){if(it.got)continue;if(it.pop){it.y+=it.popVy*dt;it.popVy+=900*dt;it.x+=(it.popVx||0)*dt;it.popLife-=dt;if(it.popLife<=0){it.pop=false;if(it.type==='coin'){it.got=true;coins++;score+=100;sfx('coin');burst(it.x,it.y,'#ffe66d',8);updateHUD();continue;}}}let iy=it.y+(it.type==='mushroom'?Math.sin(performance.now()/230)*4:0);if(p.x<it.x+30&&p.x+p.w>it.x&&p.y<iy+30&&p.y+p.h>iy){it.got=true;if(it.type==='coin'){coins++;score+=100;sfx('coin');burst(it.x,iy,'#ffe66d',7)}else{sfx('power');p.big=true;p.power=12;p.h=62;p.y-=14;score+=500;burst(it.x,iy,'#ff5757',16);toast('قارچ قدرت! بزرگ و قوی شدی!')}updateHUD()}}
+if(p.x>flag.x){sfx('win');score+=1000;gameOver=true;running=false;stopMusic();updateHUD();showEnd('مرحله را بردی!','آفرین! امتیاز: '+score,true);return}
+camera=Math.max(0,Math.min(worldW-W,p.x-W*.34));
+for(const a of particles){a.x+=a.vx;a.y+=a.vy;a.vy+=250*dt;a.life-=dt}particles=particles.filter(a=>a.life>0);updateHUD()}
+function rounded(x,y,w,h,r,c){ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function draw(){ctx.clearRect(0,0,W,H);let sky=ctx.createLinearGradient(0,0,0,H);if(level%3===1){sky.addColorStop(0,'#61c9ff');sky.addColorStop(1,'#d5f8ff')}else if(level%3===2){sky.addColorStop(0,'#8b82c9');sky.addColorStop(1,'#e0c9ff')}else{sky.addColorStop(0,'#f5a65c');sky.addColorStop(1,'#ffe6a8')}ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ctx.save();ctx.translate(-camera,0);
+for(let i=0;i<9;i++){let x=i*430+70;ctx.fillStyle='#ffffffa8';ctx.beginPath();ctx.ellipse(x,105+(i%3)*55,42,17,0,0,Math.PI*2);ctx.ellipse(x+25,96+(i%3)*55,30,20,0,0,Math.PI*2);ctx.fill()}
+for(let i=0;i<12;i++){let x=i*330-camera*.3;ctx.fillStyle='#68c77c';ctx.beginPath();ctx.arc(x,ground()+8,115,Math.PI,0);ctx.fill()}
+ctx.fillStyle='#54b94c';ctx.fillRect(0,ground(),worldW, H-ground());ctx.fillStyle='#3b963f';ctx.fillRect(0,ground(),worldW,12);
+for(let x=0;x<worldW;x+=42){ctx.fillStyle=(x/42%2?'#4aa83e':'#62c953');ctx.fillRect(x,ground()+18,22,5)}
+for(const b of questionBlocks){const by=b.y-(b.bump>0?Math.sin((b.bump/.16)*Math.PI)*7:0);rounded(b.x,by,b.w,b.h,7,b.used?'#9a7650':'#f5a623');ctx.strokeStyle=b.used?'#65452d':'#fff0a0';ctx.lineWidth=3;ctx.strokeRect(b.x+2,by+2,b.w-4,b.h-4);ctx.fillStyle=b.used?'#d2b18a':'#fff7c8';ctx.font='bold 25px Arial';ctx.textAlign='center';ctx.fillText(b.used?'':'?',b.x+b.w/2,by+28);b.bump=Math.max(0,b.bump-.016);}
+for(const q of platforms){rounded(q.x,q.y,q.w,q.h,8,'#b86b31');rounded(q.x,q.y,q.w,9,6,'#69d45c');for(let x=q.x+15;x<q.x+q.w-5;x+=32)rounded(x,q.y+12,13,4,2,'#8a4b25')}
+for(const it of items){if(it.got)continue;if(it.type==='coin'){ctx.fillStyle='#ffdb42';ctx.beginPath();ctx.ellipse(it.x+14,it.y+14,10,14,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff2a0';ctx.lineWidth=3;ctx.stroke()}else{ctx.fillStyle='#f04444';ctx.beginPath();ctx.arc(it.x+15,it.y+14,15,Math.PI,0);ctx.lineTo(it.x+30,it.y+27);ctx.lineTo(it.x,it.y+27);ctx.closePath();ctx.fill();ctx.fillStyle='white';ctx.beginPath();ctx.arc(it.x+10,it.y+9,4,0,7);ctx.arc(it.x+22,it.y+9,4,0,7);ctx.fill();rounded(it.x+3,it.y+25,24,8,3,'#fff0c8')}}
+for(const e of enemies){if(!e.alive)continue;rounded(e.x,e.y+10,e.w,e.h-10,12,'#9a552e');ctx.fillStyle='#f4c18c';ctx.beginPath();ctx.ellipse(e.x+19,e.y+13,19,13,0,Math.PI,0);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(e.x+10,e.y+16,6,8);ctx.fillRect(e.x+24,e.y+16,6,8);ctx.fillStyle='#17243a';ctx.fillRect(e.x+13,e.y+18,3,5);ctx.fillRect(e.x+26,e.y+18,3,5);ctx.fillStyle='#59351f';ctx.fillRect(e.x+5,e.y+30,10,4);ctx.fillRect(e.x+25,e.y+30,10,4)}
+// finish flag
+ctx.fillStyle='#e8f1ff';ctx.fillRect(flag.x,ground()-155,8,155);ctx.fillStyle='#ffdb45';ctx.beginPath();ctx.moveTo(flag.x+8,ground()-153);ctx.lineTo(flag.x+75,ground()-130);ctx.lineTo(flag.x+8,ground()-108);ctx.fill();
+// قهرمان قارچ‌خور: کلاه قرمز، سبیل، لباس آبی و دستکش
+let blink=player.inv>0&&Math.floor(performance.now()/100)%2===0;
+if(!blink){
+ const p=player,x=p.x,y=p.y,w=p.w,h=p.h;
+ if(customSkin&&customSkin.complete&&customSkin.naturalWidth){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,9);ctx.clip();ctx.drawImage(customSkin,x,y,w,h);ctx.restore();} else {
+ // کفش‌ها و پاها
+ rounded(x+1,y+h-12,15,12,5,'#713b20');rounded(x+w-16,y+h-12,15,12,5,'#713b20');
+ // لباس آبی و بندهای دوبنده
+ rounded(x+4,y+19,w-8,h-29,7,'#1768d5');
+ rounded(x+7,y+22,7,Math.max(10,h-38),3,'#f5bd32');rounded(x+w-14,y+22,7,Math.max(10,h-38),3,'#f5bd32');
+ ctx.fillStyle='#ffdf55';ctx.beginPath();ctx.arc(x+10,y+27,2.2,0,7);ctx.arc(x+w-10,y+27,2.2,0,7);ctx.fill();
+ // دست‌ها
+ rounded(x-2,y+23,8,15,4,'#eeb58d');rounded(x+w-6,y+23,8,15,4,'#eeb58d');
+ // صورت
+ rounded(x+5,y+5,w-10,23,8,'#f2bd91');
+ // گوش و بینی
+ ctx.fillStyle='#f2bd91';ctx.beginPath();ctx.arc(x+5,y+18,4,0,7);ctx.arc(x+w-5,y+18,4,0,7);ctx.fill();
+ ctx.beginPath();ctx.ellipse(x+w/2+4,y+20,5,3,0,0,7);ctx.fill();
+ // کلاه قرمز و لبه
+ rounded(x+2,y-2,w-4,12,5,'#d92727');rounded(x-2,y+6,w+4,5,3,'#b71920');
+ ctx.fillStyle='#fff';ctx.font='bold 8px Arial';ctx.textAlign='center';ctx.fillText('M',x+w/2,y+6);
+ // چشم‌ها
+ ctx.fillStyle='#fff';ctx.fillRect(x+10,y+12,5,8);ctx.fillRect(x+21,y+12,5,8);
+ ctx.fillStyle='#17243a';ctx.fillRect(x+12,y+14,2.5,5);ctx.fillRect(x+23,y+14,2.5,5);
+ // سبیل مشکی
+ ctx.fillStyle='#3a241c';ctx.beginPath();ctx.ellipse(x+w/2+1,y+23,10,4,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#f2bd91';ctx.fillRect(x+w/2-2,y+21,5,3);
+ }
+}
+for(const a of particles){ctx.globalAlpha=Math.max(0,a.life);ctx.fillStyle=a.color;ctx.fillRect(a.x,a.y,5,5);ctx.globalAlpha=1}
+ctx.restore();
+}
+function loop(t){if(!running)return;if(paused){last=t;return}let dt=Math.min((t-last)/1000,.033);last=t;update(dt);draw();if(running)requestAnimationFrame(loop)}
+reset();draw();
+})();
+</script></body></html>
